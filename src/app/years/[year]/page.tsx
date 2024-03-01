@@ -28,6 +28,9 @@ export default function YearPage() {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [f1Sessions, setF1Sessions] = useState<F1Session[]>([]);
 
+  const [page, setPage] = useState<number>(0);
+  const sessionsPerPage = 5;
+
   useEffect(() => {
     fetch(
       `${process.env.OPEN_F1_URL}/sessions?year=${params.year}&session_type=Race&session_name=Race`,
@@ -35,7 +38,11 @@ export default function YearPage() {
       .then(async (res) => {
         const result = await res.json();
 
-        setF1Sessions(result);
+        setF1Sessions(
+          result.sort((a: F1Session, b: F1Session) => {
+            return new Date(a.date_start) > new Date(b.date_start) ? 1 : -1;
+          }),
+        );
         setIsLoading(false);
       })
       .catch(console.log);
@@ -45,19 +52,45 @@ export default function YearPage() {
     <main className="flex min-h-screen flex-col items-center justify-between">
       {isLoading && <Loader />}
       <ul className="w-full lg:w-5/12">
-        {f1Sessions.map((session) => (
-          <li
-            key={session.session_key}
-            className="flex gap-2 items-center my-2 border-b-2 border-solid border-gray-500 p-2 w-full hover:bg-gray-700 cursor-pointer"
-          >
-            <Link
-              className="w-full p-2"
-              href={`/years/${params.year}/sessions/${session.session_key}`}
+        {f1Sessions
+          .slice(page * sessionsPerPage, (page + 1) * sessionsPerPage)
+          .map((session) => (
+            <li
+              key={session.session_key}
+              className="flex gap-2 items-center my-2 border-b-2 border-solid border-gray-500 p-2 w-full hover:bg-gray-700 cursor-pointer"
             >
-              {session.location}
-            </Link>
+              <Link
+                className="w-full p-2"
+                href={`/years/${params.year}/sessions/${session.session_key}`}
+              >
+                {session.location} - {session.date_start.split('T')[0]}
+              </Link>
+            </li>
+          ))}
+        {!isLoading && (
+          <li className="flex justify-between">
+            <span
+              className="cursor-pointer hover:bg-gray-800 bg-gray-700 p-2"
+              onClick={() => {
+                if (page > 0) {
+                  setPage(page - 1);
+                }
+              }}
+            >
+              Previous
+            </span>
+            <span
+              className="cursor-pointer hover:bg-gray-800 bg-gray-700 p-2"
+              onClick={() => {
+                if (page < Math.ceil(f1Sessions.length / sessionsPerPage) - 1) {
+                  setPage(page + 1);
+                }
+              }}
+            >
+              Next
+            </span>
           </li>
-        ))}
+        )}
       </ul>
     </main>
   );

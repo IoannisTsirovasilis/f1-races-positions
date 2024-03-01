@@ -2,7 +2,6 @@
 
 import Loader from '@/components/Loader';
 import Image from 'next/image';
-import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
 
@@ -18,6 +17,7 @@ type F1Driver = F1Position & {
   first_name: string;
   last_name: string;
   headshot_url: string;
+  team_name: string;
 };
 
 export default function YearPage() {
@@ -25,6 +25,9 @@ export default function YearPage() {
 
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [f1Drivers, setF1Drivers] = useState<F1Driver[]>([]);
+
+  const [page, setPage] = useState<number>(0);
+  const driversPerPage = 5;
 
   async function fetchDriver(driverNumber: number) {
     const res = await fetch(
@@ -70,13 +73,12 @@ export default function YearPage() {
               first_name: driver.first_name,
               last_name: driver.last_name,
               headshot_url: driver.headshot_url,
+              team_name: driver.team_name,
             };
 
             return f1Driver;
           }),
         );
-
-        console.log(driversWithPositions);
 
         setF1Drivers(driversWithPositions);
         setIsLoading(false);
@@ -88,21 +90,47 @@ export default function YearPage() {
     <main className="flex min-h-screen flex-col items-center justify-between">
       {isLoading && <Loader />}
       <ul className="w-full lg:w-5/12">
-        {f1Drivers.map((driver) => (
-          <li
-            key={driver.driver_number}
-            className="flex gap-2 items-center my-2 border-b-2 border-solid border-gray-500 p-2 w-full hover:bg-gray-400"
-          >
-            {driver.position}.{' '}
-            <Image
-              width={50}
-              height={50}
-              src={driver.headshot_url}
-              alt={driver.first_name + ' ' + driver.last_name}
-            />{' '}
-            {driver.first_name} {driver.last_name}
+        {f1Drivers
+          .slice(page * driversPerPage, (page + 1) * driversPerPage)
+          .map((driver) => (
+            <li
+              key={driver.driver_number}
+              className="flex gap-2 items-center my-2 border-b-2 border-solid border-gray-500 p-2 w-full hover:bg-gray-400"
+            >
+              {driver.position}.{' '}
+              <Image
+                width={50}
+                height={50}
+                src={driver.headshot_url}
+                alt={driver.first_name + ' ' + driver.last_name}
+              />{' '}
+              {driver.first_name} {driver.last_name} [{driver.team_name}]
+            </li>
+          ))}
+        {!isLoading && (
+          <li className="flex justify-between">
+            <span
+              className="cursor-pointer hover:bg-gray-800 bg-gray-700 p-2"
+              onClick={() => {
+                if (page > 0) {
+                  setPage(page - 1);
+                }
+              }}
+            >
+              Previous
+            </span>
+            <span
+              className="cursor-pointer hover:bg-gray-800 bg-gray-700 p-2"
+              onClick={() => {
+                if (page < Math.ceil(f1Drivers.length / driversPerPage) - 1) {
+                  setPage(page + 1);
+                }
+              }}
+            >
+              Next
+            </span>
           </li>
-        ))}
+        )}
       </ul>
     </main>
   );
