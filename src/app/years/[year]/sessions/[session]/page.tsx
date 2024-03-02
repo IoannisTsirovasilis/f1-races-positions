@@ -3,7 +3,7 @@
 import Loader from '@/components/Loader';
 import Image from 'next/image';
 import { useParams } from 'next/navigation';
-import { Suspense, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 interface F1Position {
   date: string;
